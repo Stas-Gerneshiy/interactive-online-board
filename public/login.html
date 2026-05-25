@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вхід</title>
+
+    <style>
+
+        body{
+            margin:0;
+            height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:#0f172a;
+            font-family:Arial;
+        }
+
+        .box{
+            width:320px;
+            background:#1e293b;
+            padding:30px;
+            border-radius:16px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        }
+
+        h1{
+            color:white;
+            margin:0 0 10px;
+            text-align:center;
+        }
+
+        input{
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            font-size:16px;
+        }
+
+        button{
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            background:#3b82f6;
+            color:white;
+            font-size:16px;
+            cursor:pointer;
+        }
+
+        .switch{
+            color:#94a3b8;
+            text-align:center;
+            cursor:pointer;
+        }
+
+        .error{
+            color:#ef4444;
+            text-align:center;
+            min-height:20px;
+        }
+
+    </style>
+    
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+</head>
+<body>
+
+<div class="box">
+
+    <h1>Вхід</h1>
+
+    <input type="email" id="email" placeholder="Ел. пошта">
+    <input type="password" id="password" placeholder="Пароль">
+
+    <input
+        type="password"
+        id="confirmPassword"
+        placeholder="Підтвердіть пароль"
+        style="display:none;"
+    >
+
+    <button id="submitBtn">Увійти</button>
+    <div id="googleLogin"></div>
+
+    <div class="switch" id="switchMode">
+        Немає акаунта? Зареєструватися
+    </div>
+
+    <div class="error" id="error"></div>
+
+</div>
+
+<script>
+
+let isLogin = true;
+
+const submitBtn = document.getElementById('submitBtn');
+const switchMode = document.getElementById('switchMode');
+const error = document.getElementById('error');
+
+window.onload = () => {
+
+    google.accounts.id.initialize({
+        client_id: '184053037720-i6kh0b1h1ga1ou8102euoap7615tsar9.apps.googleusercontent.com',
+        callback: handleGoogleLogin
+    });
+
+    google.accounts.id.renderButton(
+        document.getElementById('googleLogin'),
+        {
+            theme: 'outline',
+            size: 'large',
+            width: 260
+        }
+    );
+};
+
+async function handleGoogleLogin(response) {
+
+    try {
+
+        error.innerText = '';
+
+        if (!response || !response.credential) {
+            error.innerText = 'Не отримано дані Google-авторизації';
+            return;
+        }
+
+        const res = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                credential: response.credential
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            error.innerText =
+                data.error || 'Помилка входу через Google';
+            return;
+        }
+
+        if (data.token) {
+
+            localStorage.setItem(
+                'token',
+                data.token
+            );
+
+            localStorage.setItem(
+                'user',
+                JSON.stringify(data.user)
+            );
+
+            localStorage.removeItem('shareToken');
+
+            window.location.href = '/';
+
+        } else {
+
+            error.innerText =
+                data.error || 'Помилка входу через Google';
+        }
+
+    } catch (err) {
+
+        console.error('Google login frontend error:', err);
+
+        error.innerText =
+            'Не вдалося виконати вхід через Google';
+    }
+}
+
+switchMode.onclick = () => {
+
+    isLogin = !isLogin;
+
+const confirmPassword =
+    document.getElementById('confirmPassword');
+
+    if(isLogin){
+
+        submitBtn.innerText = 'Увійти';
+
+        switchMode.innerText =
+            'Немає акаунта? Зареєструватися';
+
+        confirmPassword.style.display = 'none';
+
+    }
+    
+    else{
+
+        submitBtn.innerText = 'Зареєструватися';
+
+        switchMode.innerText =
+            'Вже є акаунт? Увійти';
+
+        confirmPassword.style.display = 'block';
+    }
+};
+
+submitBtn.onclick = async () => {
+
+    error.innerText = '';
+
+    const email =
+        document.getElementById('email').value;
+
+    const password =
+        document.getElementById('password').value;
+
+    const confirm =
+        document.getElementById('confirmPassword').value;
+
+    if(!isLogin){
+
+        if(!confirm){
+            error.innerText =
+                'Підтвердіть пароль';
+            return;
+        }
+
+        if(password !== confirm){
+            error.innerText =
+                'Паролі не збігаються';
+            return;
+        }
+    }
+
+    const endpoint = isLogin
+        ? '/api/auth/login'
+        : '/api/auth/register';
+
+    const res = await fetch(endpoint,{
+        method:'POST',
+        headers:{
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+            email,
+            password
+        })
+    });
+
+    const data = await res.json();
+
+    // LOGIN
+    if(isLogin){
+
+        if(data.token){
+
+            localStorage.setItem(
+                'token',
+                data.token
+            );
+
+            localStorage.setItem(
+                'user',
+                JSON.stringify(data.user)
+            );
+
+            window.location.href = '/';
+
+        }else{
+            error.innerText =
+                data.error || 'Помилка входу';
+        }
+
+    }else{
+
+        // REGISTER
+        if(data.id){
+
+            alert('Акаунт створено!');
+
+            isLogin = true;
+
+            submitBtn.innerText = 'Увійти';
+
+            switchMode.innerText =
+                'Немає акаунта? Зареєструватися';
+
+        }else{
+            error.innerText =
+                data.error || 'Помилка реєстрації';
+        }
+    }
+};
+
+</script>
+
+</body>
+</html>

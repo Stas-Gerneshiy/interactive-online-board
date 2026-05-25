@@ -1,0 +1,34 @@
+{
+  "name": "collab_board-new",
+  "version": "1.0.0",
+  "description": "Interactive online board for collaborative work",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "keywords": [
+    "online-board",
+    "collaboration",
+    "nodejs",
+    "express",
+    "socket.io",
+    "postgresql",
+    "google-oauth"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2",
+    "google-auth-library": "^10.6.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0",
+    "socket.io": "^4.8.3"
+  }
+}

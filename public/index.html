@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Інтерактивна онлайн-дошка</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="logo">🧠 Online Board</div>
+        <button id="addBoard">+ Дошка</button>
+        
+        <div id="boardsList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="topbar">
+            <div class="title">Інтерактивна онлайн-дошка</div>
+            <div class="actions">
+                <button id="adminBtn" style="display:none;">Admin</button>
+                <button id="logoutBtn">Вийти</button>
+                <button id="addNote">+ Нотатка</button>
+                <button id="addRect">+ Прямокутник</button>
+                <button id="addLine">+ Лінія</button>
+                <button id="shareBoard">Поділитися</button>
+            </div>
+        </div>
+
+        <div id="boardViewport">
+            <div id="board"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<div id="boardMenu" class="board-menu"></div>
+<div id="shareMenu" class="board-menu"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/script.js"></script>
+
+</body>
+</html>
