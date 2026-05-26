@@ -147,6 +147,198 @@ function openShapeColorMenu(el, e) {
     document.body.appendChild(menu);
 }
 
+function isTouchPointer(e) {
+    return e.pointerType === 'touch' || e.pointerType === 'pen';
+}
+
+function openMobileColorMenu(el, clientX, clientY) {
+
+    if (isViewMode) return;
+
+    document.querySelectorAll('.color-menu')
+        .forEach(m => m.remove());
+
+    document.querySelectorAll('.palette')
+        .forEach(p => p.classList.remove('show'));
+
+    const menu =
+        document.createElement('div');
+
+    menu.className =
+        'color-menu';
+
+    menu.style.position =
+        'fixed';
+
+    colors.forEach(c => {
+
+        const item =
+            document.createElement('div');
+
+        item.className =
+            'color-item ' + c;
+
+        item.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+        });
+
+        item.onclick = async (e) => {
+
+            e.stopPropagation();
+
+            if (el.dataset.type === 'note') {
+
+                el.className =
+                    'note ' + c;
+
+                el.dataset.color =
+                    c;
+
+            } else {
+
+                applyShapeColor(el, c);
+            }
+
+            await save(el);
+
+            menu.remove();
+        };
+
+        menu.appendChild(item);
+    });
+
+    document.body.appendChild(menu);
+
+    const menuWidth =
+        menu.offsetWidth || 160;
+
+    const menuHeight =
+        menu.offsetHeight || 48;
+
+    menu.style.left =
+        Math.max(
+            8,
+            Math.min(clientX, window.innerWidth - menuWidth - 8)
+        ) + 'px';
+
+    menu.style.top =
+        Math.max(
+            8,
+            Math.min(clientY, window.innerHeight - menuHeight - 8)
+        ) + 'px';
+}
+
+function bindMobileColorMenu(el) {
+
+    let longPressTimer = null;
+    let startX = 0;
+    let startY = 0;
+
+    function clearLongPress() {
+
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+        }
+
+        longPressTimer = null;
+    }
+
+    el.addEventListener('pointerdown', (e) => {
+
+        if (isViewMode) return;
+        if (!isTouchPointer(e)) return;
+
+        if (e.target.closest('.palette')) return;
+        if (e.target.classList.contains('resize-handle')) return;
+        if (e.target.classList.contains('line-end-handle')) return;
+
+        startX =
+            e.clientX;
+
+        startY =
+            e.clientY;
+
+        longPressTimer =
+            setTimeout(() => {
+
+                longPressTimer = null;
+
+                openMobileColorMenu(
+                    el,
+                    startX,
+                    startY
+                );
+
+            }, 550);
+    });
+
+    el.addEventListener('pointermove', (e) => {
+
+        if (!longPressTimer) return;
+
+        const distance =
+            Math.hypot(
+                e.clientX - startX,
+                e.clientY - startY
+            );
+
+        if (distance > 8) {
+            clearLongPress();
+        }
+    });
+
+    el.addEventListener('pointerup', clearLongPress);
+    el.addEventListener('pointercancel', clearLongPress);
+    el.addEventListener('pointerleave', clearLongPress);
+}
+
+function bindMobileNoteEditing(noteEl, contentEl) {
+
+    let lastTapTime = 0;
+
+    contentEl.addEventListener('pointerup', (e) => {
+
+        if (isViewMode) return;
+        if (!isTouchPointer(e)) return;
+        if (contentEl.isContentEditable) return;
+
+        const now =
+            Date.now();
+
+        if (now - lastTapTime < 350) {
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            noteEl.dataset.editing =
+                'true';
+
+            contentEl.contentEditable =
+                true;
+
+            contentEl.focus();
+
+            const range =
+                document.createRange();
+
+            const selection =
+                window.getSelection();
+
+            range.selectNodeContents(contentEl);
+            range.collapse(false);
+
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            lastTapTime = 0;
+
+            return;
+        }
+
+        lastTapTime =
+            now;
+    });
+}
 
 let boardId = null;
 let isViewMode = false;
@@ -608,6 +800,8 @@ function createElement(n) {
             openShapeColorMenu(div, e);
         };
 
+        bindMobileColorMenu(div);
+
         // DRAG
         div.onpointerdown = (e) => {
             if (e.button === 2) return;
@@ -674,6 +868,8 @@ function createElement(n) {
 
             openShapeColorMenu(div, e);
         };
+
+        bindMobileColorMenu(div);
 
         // DRAG
         div.onpointerdown = (e) => {
@@ -756,6 +952,8 @@ function createElement(n) {
         content.focus();
     };
 
+    bindMobileNoteEditing(div, content);
+
     content.oninput = () => {
         normalizeNoteSize(div);
     };
@@ -813,6 +1011,8 @@ function createElement(n) {
 
         document.body.appendChild(menu);
     };
+
+    bindMobileColorMenu(div);
 
     // DRAG
     div.onpointerdown = (e) => {
@@ -913,6 +1113,17 @@ function updateBoardTransform(){
          scale(${boardScale})`;
 }
 
+function getViewportCenterPoint() {
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    return {
+        x: ((viewportRect.width / 2) - boardOffsetX) / boardScale,
+        y: ((viewportRect.height / 2) - boardOffsetY) / boardScale
+    };
+}
+
 // ================= ADD =================
 btn.onclick = async () => {
 
@@ -921,8 +1132,8 @@ btn.onclick = async () => {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             board_id: boardId,
-            x: 2400,
-            y: 2400,
+            x: getViewportCenterPoint().x,
+            y: getViewportCenterPoint().y,
             text: 'Нотатка',
             type: 'note',
             color: 'yellow',
@@ -958,8 +1169,8 @@ rectBtn.onclick = async () => {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             board_id: boardId,
-            x: 2450,
-            y: 2450,
+            x: getViewportCenterPoint().x,
+            y: getViewportCenterPoint().y,
             width: 160,
             height: 100,
             text: '',
@@ -997,8 +1208,8 @@ lineBtn.onclick = async () => {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
             board_id: boardId,
-            x: 2500,
-            y: 2500,
+            x: getViewportCenterPoint().x,
+            y: getViewportCenterPoint().y,
             width: 150,
             height: 2,
             text: '',
@@ -1223,6 +1434,106 @@ viewport.addEventListener('wheel', (e) => {
 
 }, { passive: false });
 
+let pinchStartDistance = null;
+let pinchStartScale = 1;
+let pinchWorldX = 0;
+let pinchWorldY = 0;
+let pinchCenterX = 0;
+let pinchCenterY = 0;
+
+function getTouchDistance(e) {
+
+    const dx =
+        e.touches[0].clientX - e.touches[1].clientX;
+
+    const dy =
+        e.touches[0].clientY - e.touches[1].clientY;
+
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getTouchCenter(e) {
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    return {
+        x: ((e.touches[0].clientX + e.touches[1].clientX) / 2) - viewportRect.left,
+        y: ((e.touches[0].clientY + e.touches[1].clientY) / 2) - viewportRect.top
+    };
+}
+
+viewport.addEventListener('touchstart', (e) => {
+
+    if (e.touches.length !== 2) return;
+
+    e.preventDefault();
+
+    isPanning = false;
+
+    pinchStartDistance =
+        getTouchDistance(e);
+
+    pinchStartScale =
+        boardScale;
+
+    const center =
+        getTouchCenter(e);
+
+    pinchCenterX =
+        center.x;
+
+    pinchCenterY =
+        center.y;
+
+    pinchWorldX =
+        (pinchCenterX - boardOffsetX) / boardScale;
+
+    pinchWorldY =
+        (pinchCenterY - boardOffsetY) / boardScale;
+
+}, { passive: false });
+
+viewport.addEventListener('touchmove', (e) => {
+
+    if (e.touches.length !== 2 || !pinchStartDistance) return;
+
+    e.preventDefault();
+
+    const currentDistance =
+        getTouchDistance(e);
+
+    const scaleFactor =
+        currentDistance / pinchStartDistance;
+
+    boardScale =
+        pinchStartScale * scaleFactor;
+
+    boardScale =
+        Math.max(0.2, Math.min(3, boardScale));
+
+    boardOffsetX =
+        pinchCenterX - pinchWorldX * boardScale;
+
+    boardOffsetY =
+        pinchCenterY - pinchWorldY * boardScale;
+
+    updateBoardTransform();
+
+}, { passive: false });
+
+viewport.addEventListener('touchend', (e) => {
+
+    if (e.touches.length < 2) {
+        pinchStartDistance = null;
+    }
+
+}, { passive: false });
+
+viewport.addEventListener('touchcancel', () => {
+    pinchStartDistance = null;
+}, { passive: false });
+
 // ================= SAVE =================
 async function save(el) {
 
@@ -1302,12 +1613,24 @@ let panStartY = 0;
 
 viewport.addEventListener('pointerdown', (e) => {
 
-    // middle mouse only
-    if(e.button !== 1) return;
+    const clickedElement =
+        e.target.closest(
+            '.note, .rect, .line, .resize-handle, .line-end-handle, button, .board-item, .board-menu-item, .color-menu, .color-item, .palette'
+        );
+
+    // ПК: дошка рухається середньою кнопкою навіть по елементу.
+    // Телефон: дошка рухається одним пальцем тільки по порожньому місцю.
+    if (clickedElement && !(e.pointerType === 'mouse' && e.button === 1)) return;
+
+    if (e.pointerType === 'mouse' && e.button !== 1) return;
 
     e.preventDefault();
 
     isPanning = true;
+
+    if (isTouchPointer(e) && viewport.setPointerCapture) {
+        viewport.setPointerCapture(e.pointerId);
+    }
 
     panStartX =
         e.clientX - boardOffsetX;
@@ -1320,6 +1643,10 @@ document.addEventListener('pointermove', (e) => {
 
     if(!isPanning) return;
 
+    if (isTouchPointer(e)) {
+        e.preventDefault();
+    }
+
     boardOffsetX =
         e.clientX - panStartX;
 
@@ -1330,6 +1657,11 @@ document.addEventListener('pointermove', (e) => {
 });
 
 document.addEventListener('pointerup', () => {
+
+    isPanning = false;
+});
+
+document.addEventListener('pointercancel', () => {
 
     isPanning = false;
 });
@@ -1353,6 +1685,20 @@ function startDrag(e) {
     if (isViewMode) return;
     if (e.target.classList.contains('resize-handle')) return;
     if (e.target.classList.contains('line-end-handle')) return;
+
+    // ПК: елемент рухається тільки лівою кнопкою.
+    // Середня кнопка лишається для руху дошки.
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    // На телефоні блокуємо стандартні touch-жести браузера тільки під час drag.
+    // На ПК preventDefault не ставимо, щоб не ламати dblclick редагування тексту.
+    if (isTouchPointer(e)) {
+        e.preventDefault();
+
+        if (e.currentTarget.setPointerCapture) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        }
+    }
 
     const targetElement =
         e.currentTarget;
@@ -1390,6 +1736,10 @@ function move(e) {
 
     if (!active) return;
 
+    if (isTouchPointer(e)) {
+        e.preventDefault();
+    }
+
     const point =
         getBoardPoint(e);
 
@@ -1413,6 +1763,15 @@ let resizing = null, startW, startH, startX, startY;
 
 function startResize(e, el) {
     if (isViewMode) return;
+
+    if (isTouchPointer(e)) {
+        e.preventDefault();
+
+        if (e.currentTarget.setPointerCapture) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        }
+    }
+
     resizing = el;
 
     startW = el.offsetWidth;
@@ -1427,6 +1786,10 @@ function startResize(e, el) {
 function resizeMove(e) {
 
     if (!resizing) return;
+
+    if (isTouchPointer(e)) {
+        e.preventDefault();
+    }
 
     if (resizing.dataset.type === 'line') {
 

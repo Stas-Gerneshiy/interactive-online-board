@@ -9,16 +9,17 @@
 
         body{
             margin:0;
-            height:100vh;
+            min-height:100dvh;
             display:flex;
             justify-content:center;
             align-items:center;
             background:#0f172a;
             font-family:Arial;
+            padding:16px;
         }
 
         .box{
-            width:320px;
+            width: min(320px, calc(100vw - 32px));
             background:#1e293b;
             padding:30px;
             border-radius:16px;

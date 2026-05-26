@@ -154,6 +154,18 @@ body {
     transform: none;
 }
 
+.note.editing {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.note.editing .note-content {
+    user-select: text;
+    -webkit-user-select: text;
+    touch-action: auto;
+    cursor: text;
+}
+
 /* colors */
 .note.yellow { background: #facc15; color: black; }
 .note.blue { background: #38bdf8; color: black; }
@@ -283,4 +295,293 @@ body {
 
 .board-menu-item:hover {
     background: #1e293b;
+}
+
+/* =========================
+   MOBILE / RESPONSIVE
+========================= */
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body.board-body {
+    height: 100dvh;
+    overflow: hidden;
+}
+
+body.board-body .app {
+    height: 100dvh;
+}
+
+button,
+.board-item,
+.board-menu-item,
+.resize-handle,
+.line-end-handle {
+    touch-action: manipulation;
+}
+
+#boardViewport {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overscroll-behavior: none;
+    touch-action: none;
+}
+
+#board {
+    touch-action: none;
+}
+
+@media (max-width: 768px) {
+
+    .color-menu {
+        gap: 10px;
+        padding: 10px;
+        border-radius: 12px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .color-item {
+        width: 28px;
+        height: 28px;
+    }
+
+    .app {
+        flex-direction: column;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-width: 0;
+        height: 132px;
+        max-height: 132px;
+        padding: 10px 10px 8px;
+        border-right: none;
+        border-bottom: 1px solid #1e293b;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+
+    .logo {
+        font-size: 22px;
+        line-height: 1.1;
+        margin-bottom: 8px;
+        white-space: nowrap;
+    }
+
+    #addBoard {
+        width: 100%;
+        height: 42px;
+        min-height: 42px;
+        padding: 0 12px;
+        margin-bottom: 8px;
+        font-size: 18px;
+        border-radius: 12px;
+    }
+
+    #boardsList {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        height: 34px;
+        padding-bottom: 4px;
+    }
+
+    .board-item {
+        height: 30px;
+        min-width: max-content;
+        padding: 6px 12px;
+        font-size: 14px;
+        line-height: 18px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .main {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .topbar {
+        height: 128px;
+        min-height: 128px;
+        padding: 8px 10px;
+        gap: 8px;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        flex-shrink: 0;
+    }
+
+    .title {
+        display: none;
+    }
+
+    .actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: 38px;
+        gap: 8px;
+        overflow: visible;
+        padding-bottom: 0;
+    }
+
+    .actions button {
+        width: 100%;
+        min-width: 0;
+        height: 38px;
+        min-height: 38px;
+        padding: 0 8px;
+        font-size: 13px;
+        border-radius: 10px;
+        flex-shrink: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #boardViewport {
+        flex: 1;
+        height: auto;
+        min-height: 0;
+    }
+
+    .note {
+        min-width: 130px;
+        min-height: 90px;
+        font-size: 14px;
+    }
+
+    .note-content {
+        font-size: 14px;
+        line-height: 1.25;
+    }
+
+    .resize-handle,
+    .line-end-handle {
+        width: 22px;
+        height: 22px;
+    }
+
+    .board-menu,
+    .color-menu {
+        position: fixed;
+        max-width: calc(100vw - 20px);
+        z-index: 99999;
+    }
+
+    .board-menu-item {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        font-size: 15px;
+    }
+
+    .admin-page {
+        padding: 12px !important;
+        overflow-x: hidden !important;
+    }
+
+    .admin-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }
+
+    .admin-header h1 {
+        font-size: 24px;
+    }
+
+    .admin-header button {
+        min-height: 44px;
+    }
+
+    .stats {
+        flex-direction: column !important;
+    }
+
+    .stat-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+    }
+
+    th,
+    td {
+        padding: 8px !important;
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .sidebar {
+        height: 118px;
+        max-height: 118px;
+        padding: 8px;
+    }
+
+    .logo {
+        font-size: 20px;
+        margin-bottom: 6px;
+    }
+
+    #addBoard {
+        height: 38px;
+        min-height: 38px;
+        font-size: 16px;
+        margin-bottom: 6px;
+    }
+
+    #boardsList {
+        height: 30px;
+    }
+
+    .board-item {
+        height: 26px;
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+
+    .topbar {
+        height: 120px;
+        min-height: 120px;
+        padding: 7px 8px;
+    }
+
+    .title {
+        font-size: 18px;
+        line-height: 22px;
+    }
+
+    .actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: 36px;
+        gap: 7px;
+    }
+
+    .actions button {
+        height: 36px;
+        min-height: 36px;
+        font-size: 12px;
+        padding: 0 6px;
+    }
 }
