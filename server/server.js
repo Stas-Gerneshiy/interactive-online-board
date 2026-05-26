@@ -71,7 +71,31 @@ app.get('/api', (req, res) => {
     });
 });
 
-app.use(express.static(path.join(__dirname, '../public')));
+const publicPath =
+    path.join(__dirname, '..', 'public');
+
+app.use(
+    express.static(publicPath, {
+        etag: false,
+        maxAge: 0,
+        setHeaders: (res) => {
+            res.setHeader(
+                'Cache-Control',
+                'no-store, no-cache, must-revalidate, proxy-revalidate'
+            );
+
+            res.setHeader(
+                'Pragma',
+                'no-cache'
+            );
+
+            res.setHeader(
+                'Expires',
+                '0'
+            );
+        }
+    })
+);
 
 app.get('/favicon.ico', (req, res) => {
     res.status(204).end();
@@ -85,8 +109,8 @@ app.get('/share/:token', (req, res) => {
 
     res.sendFile(
         path.join(
-            __dirname,
-            '../public/index.html'
+            publicPath,
+            'index.html'
         )
     );
 });
