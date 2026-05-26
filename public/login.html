@@ -222,42 +222,49 @@ submitBtn.onclick = async () => {
     const confirm =
         document.getElementById('confirmPassword').value;
 
-    if(!isLogin){
+    if (!email || !password) {
+        error.innerText =
+            'Введіть email і пароль';
+        return;
+    }
 
-        if(!confirm){
+    if (!isLogin) {
+
+        if (!confirm) {
             error.innerText =
                 'Підтвердіть пароль';
             return;
         }
 
-        if(password !== confirm){
+        if (password !== confirm) {
             error.innerText =
                 'Паролі не збігаються';
             return;
         }
     }
 
-    const endpoint = isLogin
-        ? '/api/auth/login'
-        : '/api/auth/register';
+    const endpoint =
+        isLogin
+            ? '/api/auth/login'
+            : '/api/auth/register';
 
-    const res = await fetch(endpoint,{
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json'
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
         },
-        body:JSON.stringify({
+        body: JSON.stringify({
             email,
             password
         })
     });
 
-    const data = await res.json();
+    const data =
+        await res.json();
 
-    // LOGIN
-    if(isLogin){
+    if (isLogin) {
 
-        if(data.token){
+        if (data.token) {
 
             localStorage.setItem(
                 'token',
@@ -269,28 +276,35 @@ submitBtn.onclick = async () => {
                 JSON.stringify(data.user)
             );
 
+            localStorage.removeItem('shareToken');
+
             window.location.href = '/';
 
-        }else{
+        } else {
+
             error.innerText =
                 data.error || 'Помилка входу';
         }
 
-    }else{
+    } else {
 
-        // REGISTER
-        if(data.id){
+        if (data.id) {
 
-            alert('Акаунт створено!');
+            alert('Акаунт створено! Тепер увійдіть у систему.');
 
             isLogin = true;
 
-            submitBtn.innerText = 'Увійти';
+            submitBtn.innerText =
+                'Увійти';
 
             switchMode.innerText =
                 'Немає акаунта? Зареєструватися';
 
-        }else{
+            document.getElementById('confirmPassword').style.display =
+                'none';
+
+        } else {
+
             error.innerText =
                 data.error || 'Помилка реєстрації';
         }

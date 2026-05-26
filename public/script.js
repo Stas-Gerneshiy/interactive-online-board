@@ -590,8 +590,39 @@ async function init() {
         let res =
             await api('/api/boards');
 
+        if (!res) {
+            return;
+        }
+
+        if (!res.ok) {
+
+            const err =
+                await res.json().catch(() => ({}));
+
+            console.error(
+                'Cannot load boards:',
+                err
+            );
+
+            alert(
+                err.error || 'Не вдалося завантажити дошки. Спробуйте вийти і зайти знову.'
+            );
+
+            return;
+        }
+
         boards =
             await res.json();
+
+        if (!Array.isArray(boards)) {
+
+            console.error(
+                'Boards response is not array:',
+                boards
+            );
+
+            boards = [];
+        }
 
         if (boards.length === 0) {
 
@@ -603,14 +634,51 @@ async function init() {
                     }
                 );
 
+            if (!b || !b.ok) {
+
+                const err =
+                    await b.json().catch(() => ({}));
+
+                console.error(
+                    'Cannot create first board:',
+                    err
+                );
+
+                alert(
+                    err.error || 'Не вдалося створити першу дошку'
+                );
+
+                return;
+            }
+
             let data =
                 await b.json();
+
+            if (!data.id) {
+
+                console.error(
+                    'Created board has no id:',
+                    data
+                );
+
+                alert(
+                    'Сервер не повернув id дошки'
+                );
+
+                return;
+            }
 
             boardId =
                 data.id;
 
             boards =
                 [data];
+
+            history.replaceState(
+                null,
+                '',
+                `?board=${boardId}`
+            );
 
             } else {
 
